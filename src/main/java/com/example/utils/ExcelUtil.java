@@ -54,7 +54,7 @@ public class ExcelUtil {
 
         // 保存Excel文件
         try {
-            String dateTime = new DateTime().toString("yyyy-MM-dd");
+            String dateTime = new DateTime().toString("yyyy-MM-dd_HHmm");
             String fileName = "/tmp/words_" + dateTime + ".xls";
             OutputStream outputStream = new FileOutputStream(fileName);
             workbook.write(outputStream);

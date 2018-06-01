@@ -4,6 +4,8 @@ import com.example.bean.WordBean;
 import com.example.utils.ExcelUtil;
 import com.example.utils.WordSortUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
+import org.joda.time.DateTime;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -11,7 +13,9 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -43,12 +47,15 @@ public class WordsCounterService {
                         StringBuilder page = parsePage(doc);
                         totalReview.add(page);
                     } catch (Exception e) {
+                        createExceptionFile(e.getMessage());
                         log.error("", e);
                     }
                 }
                 log.info("doworker url:{} done", url);
                 return totalReview;
             } catch (IOException e) {
+                createExceptionFile(e.getMessage());
+
                 log.error("", e);
             }
             return new ArrayList<StringBuilder>();
@@ -138,6 +145,15 @@ public class WordsCounterService {
         conn.header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36");
 
         return conn;
+    }
+
+    private void createExceptionFile(String message) {
+        String filename = new DateTime().toString("yy-MM-dd_HH-mm-ss") + ".txt";
+        try {
+            FileUtils.writeStringToFile(new File("/tmp/" + filename), message, Charset.forName("UTF-8"));
+        } catch (IOException e1) {
+            log.error("", e1);
+        }
     }
 
 }
