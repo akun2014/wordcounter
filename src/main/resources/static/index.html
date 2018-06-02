@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>单词频次统计</title>
+    <!-- 新 Bootstrap 核心 CSS 文件 -->
+    <link rel="stylesheet" href="http://cdn.bootcss.com/bootstrap/3.3.0/css/bootstrap.min.css">
+    <!-- jQuery文件。务必在bootstrap.min.js 之前引入 -->
+    <script src="http://cdn.bootcss.com/jquery/1.11.1/jquery.min.js"></script>
+    <!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+    <script src="http://cdn.bootcss.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+    <script src="inputGroup-1.1.js"></script>
+</head>
+<body>
+
+<div class="container">
+
+    <p>链接长这个样子：https://www.amazon.com/Kovea-LPG-Adaptor-Small-Silver/product-reviews/B00CFPISZW/ref=cm_cr_arp_d_viewopt_sr?ie=UTF8&reviewerType=all_reviews</p>
+    <form class="form-horizontal" role="form" id="weburls">
+        <div class="input-group-add">
+        </div>
+        <div class="form-group">
+            <div class="col-sm-offset-1 col-sm-10">
+                <button type="button" class="btn btn-default" id="btn-t">提交统计</button>
+            </div>
+        </div>
+    </form>
+    <div>
+        <div>
+            <button type="button" class="btn btn-default" id="btn-file">刷新获取统计文件</button>
+            <button type="button" class="btn btn-default" id="btn-stop">停止刷新</button>
+        </div>
+        <div class="list-group" id="files">
+            <a href="#" class="list-group-item">点击刷新按钮，获取统计文件</a>
+        </div>
+    </div>
+    <div  id="notice">
+        <div class="alert alert-danger alert-dismissible fade in" role="alert">
+            <p>获取文件列表成功</p>
+        </div>
+    </div>
+
+</div>
+</body>
+<script>
+    $(function () {
+        $('.input-group-add').initInputGroup({
+            'widget': 'input', //输入框组中间的空间类型
+            /*'add' : '添加',
+             'del' : '删除'*/
+            'field': 'data',
+            'data': ['', '', '']
+        });
+    });
+</script>
+<script>
+    $(function () {
+        $("#btn-t").click(function () {
+            var urls = $("input[name='data[]']").map(function () {
+                var url = $(this).val();
+                if (url.length > 0) {
+                    return url;
+                }
+            }).get();
+
+            var data = {
+                'urls': urls
+            };
+            $.ajax({
+                url: "rest/word/counter",
+                async: false,
+                type: "POST",
+                data: JSON.stringify(data),
+                contentType: "application/json",
+                error: function (request) {
+                    alert("Connection error");
+                },
+                success: function (data) {
+                    document.getElementById("weburls").reset();
+                    alert(data.msg);
+                }
+            });
+        });
+
+        var watcher = self.setInterval("getFile()", 1000 * 3);
+
+        $("#btn-stop").click(function () {
+            watcher = window.clearInterval(watcher)
+        });
+        $("#btn-file").click(function(){
+            watcher = self.setInterval("getFile()", 1000 * 3);
+        });
+
+    });
+
+    function getFile() {
+        $("#files").empty();
+        $("#notice").empty();
+        $.ajax({
+            url: "rest/file/list",
+            async: false,
+            type: "GET",
+            contentType: "application/json",
+            error: function (request) {
+                alert("Connection error");
+            },
+            success: function (result) {
+                var data = result.files;
+                var url = "";
+                for (var i = 0; i < data.length; i++) {
+                    url += "<a href=\"rest/file/download?filename=" + data[i] + "\" class=\"list-group-item\">" + data[i] + "</a>"
+                }
+
+                var myDate = new Date();
+                var tt = myDate.getHours() + ":" + myDate.getMinutes() + ":" + myDate.getSeconds() + "." + myDate.getMilliseconds()
+                var html = " <div class=\"alert alert-danger alert-dismissible fade in\" role=\"alert\"> <button type=\"button\" class=\"close\" data-dismiss=\"alert\" aria-label=\"Close\"><span aria-hidden=\"true\">×</span></button><p>获取文件列表成功..."+tt+"</p></div>";
+
+                $("#files").append(url);
+                $("#notice").append(html);
+                window.setTimeout(function() {
+                    $('.alert').alert('close');
+                }, 2000);
+            }
+        });
+    }
+</script>
+</body>
+</html>
